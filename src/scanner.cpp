@@ -38,18 +38,19 @@ std::optional<Token> Scanner::getToken() {
     }
     return Token(TokenType::tok_identifier, identifier_string);
   } else if (isdigit(getChar())) {
-    std::string number_string = std::to_string(getChar());
+    std::string number_string;
+    number_string += getChar();
     current_idx_ += 1;
     while (!isAtEnd() && isdigit(getChar())) {
-      number_string += std::to_string(getChar());
+      number_string += getChar();
       current_idx_ += 1;
     }
 
     if (getChar() == '.') {
-      number_string += std::to_string(getChar());
+      number_string += getChar();
       current_idx_ += 1;
       while (!isAtEnd() && isdigit(getChar())) {
-        number_string += std::to_string(getChar());
+        number_string += getChar();
         current_idx_ += 1;
       }
     }
@@ -67,7 +68,7 @@ std::optional<Token> Scanner::getToken() {
     return Token(TokenType::tok_lpar);
   } else if (getChar() == ')') {
     current_idx_ += 1;
-    return Token(TokenType::tok_lpar);
+    return Token(TokenType::tok_rpar);
   } else if (getChar() == '{') {
     current_idx_ += 1;
     return Token(TokenType::tok_lbrak);

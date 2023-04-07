@@ -44,7 +44,10 @@ public:
       : type_(type), identifier_(identifier) {}
   Token(TokenType type, double number) : type_(type), number_(number) {}
 
-  bool operator==(const Token &other) const {
+  bool operator!=(const Token &other) const { return !this->equals(other); }
+  bool operator==(const Token &other) const { return this->equals(other); }
+
+  const bool equals(const Token &other) const {
     if (other.getType() != getType()) {
       return false;
     }
@@ -57,7 +60,6 @@ public:
     }
     return true;
   }
-
   const TokenType getType() const { return type_; }
   const std::string getIdentifier() const { return identifier_; }
   const double getNumber() const { return number_; }

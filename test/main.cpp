@@ -17,7 +17,7 @@ void runScannerTests() {
                       "fib(40)";
   Scanner scanner(basic);
   scanner.scanTokens();
-  std::vector<Token> expected = {
+  const std::vector<Token> expected = {
       Token(TokenType::tok_def),
       Token(TokenType::tok_identifier, "fib"),
       Token(TokenType::tok_lpar),
@@ -53,13 +53,19 @@ void runScannerTests() {
       Token(TokenType::tok_number, 40),
       Token(TokenType::tok_rpar),
   };
-  std::cout << scanner.tokens().size() << std::endl;
-  for (const auto &token : scanner.tokens()) {
-    std::cout << token.toString() << std::endl;
+  std::vector<Token> actual = scanner.tokens();
+  for (size_t i = 0; i < expected.size(); i++) {
+    Token actual_token = actual[i];
+    Token expected_token = expected[i];
+    if (actual_token != expected_token) {
+      std::cout << "Expected " << expected[i].toString() << ", got "
+                << scanner.tokens()[i].toString() << std::endl;
+      throw std::runtime_error("Test failed");
+    }
   }
-  assert(scanner.tokens() == expected);
 }
 int main(int argc, char **argv) {
   runScannerTests();
+  std::cout << "Tests succeeded!" << std::endl;
   return 0;
 }
