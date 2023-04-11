@@ -1,14 +1,17 @@
+#pragma once
+
 #include <optional>
 #include <string>
 #include <vector>
 
-enum TokenType : int32_t {
+enum TokenType {
   tok_eof,
   // keywords
   tok_def,
   tok_extern,
   tok_if,
   tok_else,
+  tok_return,
 
   // variables
   tok_identifier,
@@ -21,6 +24,10 @@ enum TokenType : int32_t {
   tok_lpar,
   tok_rbrak,
   tok_lbrak,
+  tok_comma,
+
+  // assignment
+  tok_equals,
 
   // comparators
   tok_lt,

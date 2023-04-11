@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 
+#include "parser.h"
 #include "scanner.h"
 
 std::string readFile(std::string filepath) {
@@ -21,6 +22,9 @@ int main(int argc, char **argv) {
 
   Scanner scanner(source);
   scanner.scanTokens();
+
+  Parser parser(scanner.tokens());
+  parser.parse();
 
   return 0;
 }

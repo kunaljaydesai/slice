@@ -2,7 +2,7 @@ TARGET_EXEC := lang
 TEST_EXEC := lang_test 
 
 CXX = clang
-CPPFLAGS = -std=c++17 -stdlib=libc++ -O3 -g -fobjc-arc
+CPPFLAGS = -std=c++17 -stdlib=libc++ -O0 -g -fobjc-arc
 LIBRARIES := -lstdc++
 LDFLAGS = $(LIBRARIES)
 

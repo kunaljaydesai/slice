@@ -35,6 +35,8 @@ std::optional<Token> Scanner::getToken() {
       return Token(TokenType::tok_if);
     } else if (identifier_string == "else") {
       return Token(TokenType::tok_else);
+    } else if (identifier_string == "return") {
+      return Token(TokenType::tok_return);
     }
     return Token(TokenType::tok_identifier, identifier_string);
   } else if (isdigit(getChar())) {
@@ -104,6 +106,12 @@ std::optional<Token> Scanner::getToken() {
   } else if (getChar() == '%') {
     current_idx_ += 1;
     return Token(TokenType::tok_div);
+  } else if (getChar() == ',') {
+    current_idx_ += 1;
+    return Token(TokenType::tok_comma);
+  } else if (getChar() == '=') {
+    current_idx_ += 1;
+    return Token(TokenType::tok_equals);
   }
   throw std::runtime_error("Unidentified char");
 }
