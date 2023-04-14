@@ -4,3 +4,4 @@ build/*
 *.ll
 *.o
 main
+compile_commands.json
