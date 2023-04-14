@@ -1,9 +1,12 @@
 TARGET_EXEC := lang
 TEST_EXEC := lang_test 
 
+LLVM_CXXFLAGS := `/opt/homebrew/opt/llvm/bin/llvm-config --cxxflags`
+LLVM_LDFLAGS := `/opt/homebrew/opt/llvm/bin/llvm-config --ldflags --libs --system-libs`
+
 CXX = clang
 CPPFLAGS = -std=c++17 -stdlib=libc++ -O0 -g -fobjc-arc
-LIBRARIES := -lstdc++
+LIBRARIES := -lstdc++ 
 LDFLAGS = $(LIBRARIES)
 
 BUILD_DIR := ./build
@@ -19,15 +22,15 @@ all: $(BUILD_DIR)/$(TARGET_EXEC) $(BUILD_DIR)/$(TEST_EXEC)
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LLVM_LDFLAGS)
 
 $(BUILD_DIR)/$(TEST_EXEC): $(TEST_OBJS)
-	$(CXX) $(TEST_OBJS) -o $@ $(LDFLAGS)
+	$(CXX) $(TEST_OBJS) -o $@ $(LDFLAGS) $(LLVM_LDFLAGS)
 
 # Build step for C++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(LLVM_CXXFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 test: $(BUILD_DIR)/$(TEST_EXEC)
 	$^

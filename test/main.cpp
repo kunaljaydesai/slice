@@ -6,6 +6,7 @@
 
 const std::string basic = "# Compute the x'th fibonacci number.\n"
                           "def fib(x){\n"
+                          "a = 1\n"
                           "if (x < 3) {\n"
                           "return 1\n"
                           "} else {\n"
@@ -24,6 +25,9 @@ void runBasicTest() {
       Token(TokenType::tok_identifier, "x"),
       Token(TokenType::tok_rpar),
       Token(TokenType::tok_lbrak),
+      Token(TokenType::tok_identifier, "a"),
+      Token(TokenType::tok_equals),
+      Token(TokenType::tok_number, 1),
       Token(TokenType::tok_if),
       Token(TokenType::tok_lpar),
       Token(TokenType::tok_identifier, "x"),
@@ -74,10 +78,18 @@ void runBasicTest() {
   assert(func_declaration->getArgs()[0] == "x");
   const auto &func_body = function->getBody();
   const auto &blocks = func_body->getBlocks();
-  assert(blocks.size() == 1);
+  assert(blocks.size() == 2);
   assert(blocks[0].get()->getBodyNodeType() ==
+         BodySubNode::BodyNodeType::DefinitionNode);
+  const auto &def_block = static_cast<DefinitionNode *>(blocks[0].get());
+  const auto &lvalue = def_block->getLValue();
+  assert(lvalue == "a");
+  const auto &rhs = static_cast<NumberLiteralNode *>(def_block->getRHS());
+  assert(rhs->getExprNodeType() == ExprNode::ExprNodeType::NumberLiteralNode);
+  assert(rhs->getValue() == 1);
+  assert(blocks[1].get()->getBodyNodeType() ==
          BodySubNode::BodyNodeType::ConditionalNode);
-  const auto &if_block = static_cast<ConditionalNode *>(blocks[0].get());
+  const auto &if_block = static_cast<ConditionalNode *>(blocks[1].get());
   assert(if_block->getIfExpr()->getExprNodeType() == ExprNode::BinaryExprNode);
   const auto &if_expr = static_cast<BinaryExprNode *>(if_block->getIfExpr());
   assert(if_expr->getOperator() == tok_lt);

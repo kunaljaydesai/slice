@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "visitor.h"
 
 #include <iostream>
 
@@ -159,11 +160,13 @@ std::unique_ptr<ConditionalNode> Parser::handleConditional() {
   advance(); // skip if token
   auto if_expr = handleExpression();
 
+  advance(); // skip lbrak
   auto if_body = handleBody();
   advance(); // skip rbrak
   if (auto token = getCurrentToken()) {
     if (token->getType() == tok_else) {
       expectedNextToken(tok_lbrak);
+      advance(); // skip lbrak
       auto else_body = handleBody();
       advance(); // skip rbrak
       return std::make_unique<ConditionalNode>(
@@ -184,6 +187,7 @@ std::unique_ptr<ReturnNode> Parser::handleReturnStatement() {
 std::unique_ptr<DefinitionNode> Parser::handleDefinition() {
   auto lvalue = getCurrentToken();
   expectedNextToken(tok_equals);
+  advance();
   auto expr = handleExpression();
   return std::make_unique<DefinitionNode>(lvalue->getIdentifier(),
                                           std::move(expr));
@@ -191,24 +195,28 @@ std::unique_ptr<DefinitionNode> Parser::handleDefinition() {
 
 std::unique_ptr<BodyNode> Parser::handleBody() {
   std::vector<std::unique_ptr<BodySubNode>> blocks;
-  while (auto token = getNextToken()) {
+  while (auto token = getCurrentToken()) {
     if (!token) {
       std::cout << "Expected another token in function body" << std::endl;
       exit(1);
     }
 
     switch (token->getType()) {
-    case tok_if:
+    case tok_if: {
       blocks.push_back(handleConditional());
       break;
-    case tok_return:
+    }
+    case tok_return: {
       blocks.push_back(handleReturnStatement());
       break;
-    case tok_identifier:
+    }
+    case tok_identifier: {
       blocks.push_back(handleDefinition());
       break;
-    case tok_rbrak:
+    }
+    case tok_rbrak: {
       return std::make_unique<BodyNode>(std::move(blocks));
+    }
     default: {
       std::cout << "Expected conditional, return statemnet, or identifier in "
                    "function body but got "
@@ -268,6 +276,7 @@ std::unique_ptr<FunctionNode> Parser::handleFunction() {
       fnName->getIdentifier(), std::move(args));
 
   expectedNextToken(tok_lbrak);
+  advance(); // skip lbrak
   auto body = handleBody();
   advance(); // skip rbrak
   return std::make_unique<FunctionNode>(std::move(functionDeclaration),
@@ -291,3 +300,21 @@ std::unique_ptr<Program> Parser::parse() {
   }
   return std::make_unique<Program>(std::move(functions));
 }
+
+void FunctionDeclarationNode::accept(Visitor *v) {
+  v->visitFunctionDeclarationNode(this);
+}
+void BinaryExprNode::accept(Visitor *v) { v->visitBinaryExprNode(this); }
+void NumberLiteralNode::accept(Visitor *v) { v->visitNumberLiteralNode(this); }
+void IdentifierExprNode::accept(Visitor *v) {
+  v->visitIdentifierExprNode(this);
+}
+void FunctionCallExprNode::accept(Visitor *v) {
+  v->visitFunctionCallExprNode(this);
+}
+void BodyNode::accept(Visitor *v) { v->visitBodyNode(this); }
+void ConditionalNode::accept(Visitor *v) { v->visitConditionalNode(this); }
+void DefinitionNode::accept(Visitor *v) { v->visitDefinitionNode(this); }
+void ReturnNode::accept(Visitor *v) { v->visitReturnNode(this); }
+void FunctionNode::accept(Visitor *v) { v->visitFunctionNode(this); }
+void Program::accept(Visitor *v) { v->visitProgramNode(this); }

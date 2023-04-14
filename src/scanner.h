@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -76,7 +77,31 @@ public:
     } else if (getType() == tok_number) {
       return std::to_string(getNumber());
     }
-    return "Token: " + std::to_string(getType());
+    std::string type = "";
+    switch (getType()) {
+    case tok_lt:
+      type = "less than";
+      break;
+    case tok_gt:
+      type = "greater than";
+      break;
+    case tok_lte:
+      type = "less than equal";
+      break;
+    case tok_lbrak:
+      type = "left bracket";
+      break;
+    case tok_lpar:
+      type = "left paren";
+      break;
+    case tok_if:
+      type = "if";
+      break;
+    }
+    if (type.size() == 0) {
+      return "Token: " + std::to_string(getType());
+    }
+    return "Token: " + type;
   }
 
 private:

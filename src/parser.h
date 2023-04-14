@@ -1,20 +1,28 @@
 #include "scanner.h"
 #include <vector>
 
-class FunctionDeclarationNode {
+class Visitor;
+
+class Visitable {
+public:
+  virtual void accept(Visitor *v) = 0;
+};
+
+class FunctionDeclarationNode : public Visitable {
 public:
   FunctionDeclarationNode(const std::string &name,
                           std::vector<std::string> args)
       : name_(name), args_(std::move(args)) {}
-  const std::string &getName() { return name_; }
-  std::vector<std::string> &getArgs() { return args_; }
+  const std::string &getName() const { return name_; }
+  const std::vector<std::string> &getArgs() const { return args_; }
+  void accept(Visitor *v) override;
 
 private:
   std::string name_;
   std::vector<std::string> args_;
 };
 
-class ExprNode {
+class ExprNode : public Visitable {
 public:
   enum ExprNodeType {
     BinaryExprNode,
@@ -36,9 +44,10 @@ public:
       : operator_(op), lhs_(std::move(LHS)), rhs_(std::move(RHS)),
         ExprNode(ExprNodeType::BinaryExprNode) {}
 
-  ExprNode *getLHS() { return lhs_.get(); }
-  ExprNode *getRHS() { return rhs_.get(); }
-  TokenType getOperator() { return operator_; }
+  ExprNode *getLHS() const { return lhs_.get(); }
+  ExprNode *getRHS() const { return rhs_.get(); }
+  TokenType getOperator() const { return operator_; }
+  void accept(Visitor *v) override;
 
 private:
   std::unique_ptr<ExprNode> lhs_;
@@ -50,7 +59,8 @@ class NumberLiteralNode : public ExprNode {
 public:
   NumberLiteralNode(double value)
       : value_(value), ExprNode(ExprNodeType::NumberLiteralNode) {}
-  double getValue() { return value_; }
+  double getValue() const { return value_; }
+  void accept(Visitor *v) override;
 
 private:
   double value_;
@@ -60,7 +70,8 @@ class IdentifierExprNode : public ExprNode {
 public:
   IdentifierExprNode(const std::string &name)
       : name_(name), ExprNode(ExprNodeType::IdentifierExprNode) {}
-  const std::string &getName() { return name_; }
+  const std::string &getName() const { return name_; }
+  void accept(Visitor *v) override;
 
 private:
   std::string name_;
@@ -73,15 +84,15 @@ public:
       : name_(name), args_(std::move(args)),
         ExprNode(ExprNodeType::FunctionCallExprNode) {}
   const std::string &getName() { return name_; }
-
   std::vector<std::unique_ptr<ExprNode>> &getArgs() { return args_; }
+  void accept(Visitor *v) override;
 
 private:
   std::string name_;
   std::vector<std::unique_ptr<ExprNode>> args_;
 };
 
-class BodySubNode {
+class BodySubNode : public Visitable {
 public:
   enum BodyNodeType {
     ConditionalNode,
@@ -95,11 +106,14 @@ protected:
   BodyNodeType node_type_;
 };
 
-class BodyNode {
+class BodyNode : public Visitable {
 public:
   BodyNode(std::vector<std::unique_ptr<BodySubNode>> blocks)
       : blocks_(std::move(blocks)) {}
-  std::vector<std::unique_ptr<BodySubNode>> &getBlocks() { return blocks_; }
+  const std::vector<std::unique_ptr<BodySubNode>> &getBlocks() const {
+    return blocks_;
+  }
+  void accept(Visitor *v) override;
 
 private:
   std::vector<std::unique_ptr<BodySubNode>> blocks_;
@@ -116,6 +130,7 @@ public:
   ExprNode *getIfExpr() { return if_expr_.get(); }
   BodyNode *getIfBody() { return if_body_.get(); }
   BodyNode *getElseBody() { return else_body_.get(); }
+  void accept(Visitor *v) override;
 
 private:
   std::unique_ptr<ExprNode> if_expr_;
@@ -128,8 +143,9 @@ public:
   DefinitionNode(std::string lvalue, std::unique_ptr<ExprNode> rhs)
       : lvalue_(lvalue), rhs_(std::move(rhs)),
         BodySubNode(BodyNodeType::DefinitionNode) {}
-  const std::string &getLValue() { return lvalue_; }
-  ExprNode *getRHS() { return rhs_.get(); }
+  const std::string &getLValue() const { return lvalue_; }
+  ExprNode *getRHS() const { return rhs_.get(); }
+  void accept(Visitor *v) override;
 
 private:
   std::string lvalue_;
@@ -141,34 +157,37 @@ public:
   ReturnNode(std::unique_ptr<ExprNode> expr)
       : expr_(std::move(expr)), BodySubNode(BodyNodeType::ReturnStatementNode) {
   }
-  ExprNode *getExpr() { return expr_.get(); }
+  ExprNode *getExpr() const { return expr_.get(); }
+  void accept(Visitor *v) override;
 
 private:
   std::unique_ptr<ExprNode> expr_;
 };
 
-class FunctionNode {
+class FunctionNode : public Visitable {
 public:
   FunctionNode(std::unique_ptr<FunctionDeclarationNode> declaration,
                std::unique_ptr<BodyNode> body)
       : declaration_(std::move(declaration)), body_(std::move(body)) {}
-  BodyNode *getBody() { return body_.get(); }
-  FunctionDeclarationNode *getFunctionDeclaration() {
+  BodyNode *getBody() const { return body_.get(); }
+  FunctionDeclarationNode *getFunctionDeclaration() const {
     return declaration_.get();
   }
+  void accept(Visitor *v) override;
 
 private:
   std::unique_ptr<FunctionDeclarationNode> declaration_;
   std::unique_ptr<BodyNode> body_;
 };
 
-class Program {
+class Program : public Visitable {
 public:
   Program(std::vector<std::unique_ptr<FunctionNode>> functions)
       : functions_(std::move(functions)) {}
-  std::vector<std::unique_ptr<FunctionNode>> &getFunctions() {
+  const std::vector<std::unique_ptr<FunctionNode>> &getFunctions() const {
     return functions_;
   }
+  void accept(Visitor *v) override;
 
 private:
   std::vector<std::unique_ptr<FunctionNode>> functions_;

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 
+#include "codegen.h"
 #include "parser.h"
 #include "scanner.h"
 
@@ -24,7 +25,9 @@ int main(int argc, char **argv) {
   scanner.scanTokens();
 
   Parser parser(scanner.tokens());
-  parser.parse();
-
+  std::unique_ptr<Program> program = parser.parse();
+  CodegenVisitor visitor;
+  visitor.visitProgramNode(program.get());
+  visitor.dump();
   return 0;
 }

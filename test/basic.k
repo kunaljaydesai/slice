@@ -1,3 +1,6 @@
-def hi hello
-# hi how is it going
-going well
+# Compute fibonacci
+def fib(x) {
+    a = 1
+    b = a + 1
+    return b
+}
