@@ -5,8 +5,6 @@
 #include <iostream>
 #include <map>
 
-static std::unordered_map<std::string, llvm::AllocaInst *> NamedValues;
-
 void CodegenVisitor::visitProgramNode(const Program *node) {
   for (const auto &function : node->getFunctions()) {
     function->accept(this);
@@ -14,8 +12,10 @@ void CodegenVisitor::visitProgramNode(const Program *node) {
 }
 
 void CodegenVisitor::visitFunctionNode(const FunctionNode *node) {
+  onEnterBlock(node->getFunctionDeclaration()->getName());
   node->getFunctionDeclaration()->accept(this);
   node->getBody()->accept(this);
+  onExitBlock();
 }
 
 void CodegenVisitor::visitFunctionDeclarationNode(
@@ -69,23 +69,31 @@ void CodegenVisitor::visitNumberLiteralNode(const NumberLiteralNode *node) {
   ret_ = literal;
 }
 void CodegenVisitor::visitIdentifierExprNode(const IdentifierExprNode *node) {
-  const auto val = NamedValues[node->getName()];
-  if (!val) {
+  const auto symbol_table_node = current_symbol_table_->get(node->getName());
+  if (!symbol_table_node) {
     std::cout << "did not find identifier" << std::endl;
     exit(1);
   }
-  ret_ = builder_->CreateLoad(val->getAllocatedType(), val, node->getName());
+  ret_ =
+      builder_->CreateLoad(symbol_table_node->getAlloca()->getAllocatedType(),
+                           symbol_table_node->getAlloca(), node->getName());
 }
 
 void CodegenVisitor::visitFunctionCallExprNode(
     const FunctionCallExprNode *node) {}
-void CodegenVisitor::visitConditionalNode(const ConditionalNode *node) {}
+
+void CodegenVisitor::visitConditionalNode(const ConditionalNode *node) {
+  onEnterBlock(""); // todo...
+  onExitBlock();
+}
+
 void CodegenVisitor::visitDefinitionNode(const DefinitionNode *node) {
   node->getRHS()->accept(this);
   const auto &var_name = node->getLValue();
   auto alloca = builder_->CreateAlloca(llvm::Type::getDoubleTy(*context_),
                                        nullptr, var_name);
-  NamedValues[var_name] = alloca;
+  current_symbol_table_->insert(
+      std::make_shared<SymbolTableNode>(var_name, alloca));
   builder_->CreateStore(ret_, alloca);
 }
 
