@@ -28,13 +28,19 @@ $(BUILD_DIR)/$(TEST_EXEC): $(TEST_OBJS)
 	$(CXX) $(TEST_OBJS) -o $@ $(LDFLAGS) $(LLVM_LDFLAGS)
 
 # Build step for C++ source
-$(BUILD_DIR)/%.cpp.o: %.cpp
+$(BUILD_DIR)/%.cpp.o: %.cpp %.h
 	mkdir -p $(dir $@)
 	$(CXX) $(LLVM_CXXFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-compile: $(BUILD_DIR)/$(TARGET_EXEC)
+ir: $(BUILD_DIR)/$(TARGET_EXEC)
 	$^ test/basic.k > basic.ll
 	cat basic.ll
+
+compile: $(BUILD_DIR)/$(TARGET_EXEC)
+	$^ test/basic.k > basic.ll
+	llc -filetype=obj basic.ll -o basic.o
+	clang++ test/exec.cpp basic.o -o main
+	./main
 
 test: $(BUILD_DIR)/$(TEST_EXEC)
 	$^

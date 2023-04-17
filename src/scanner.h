@@ -97,6 +97,8 @@ public:
     case tok_if:
       type = "if";
       break;
+    default:
+      break;
     }
     if (type.size() == 0) {
       return "Token: " + std::to_string(getType());

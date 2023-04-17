@@ -24,6 +24,7 @@ private:
 
 class ExprNode : public Visitable {
 public:
+  virtual ~ExprNode() = default;
   enum ExprNodeType {
     BinaryExprNode,
     NumberLiteralNode,
@@ -94,6 +95,7 @@ private:
 
 class BodySubNode : public Visitable {
 public:
+  virtual ~BodySubNode() = default;
   enum BodyNodeType {
     ConditionalNode,
     ReturnStatementNode,

@@ -58,12 +58,19 @@ void CodegenVisitor::visitBinaryExprNode(const BinaryExprNode *node) {
   }
   case tok_sub: {
     ret_ = builder_->CreateFSub(lhs, rhs, "subtmp");
+    break;
   }
   case tok_mul: {
     ret_ = builder_->CreateFMul(lhs, rhs, "multmp");
+    break;
   }
   case tok_div: {
     ret_ = builder_->CreateFDiv(lhs, rhs, "divtmp");
+    break;
+  }
+  default: {
+    std::cout << "Unknown operator when visiting binary expr" << std::endl;
+    exit(1);
   }
   }
 }
