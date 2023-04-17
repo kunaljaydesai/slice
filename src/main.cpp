@@ -26,8 +26,11 @@ int main(int argc, char **argv) {
 
   Parser parser(scanner.tokens());
   std::unique_ptr<Program> program = parser.parse();
+
   CodegenVisitor visitor;
   visitor.visitProgramNode(program.get());
+  visitor.optimize();
   visitor.dump();
+
   return 0;
 }

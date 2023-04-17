@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/Verifier.h"
 #include <iostream>
 #include <map>
 
@@ -14,7 +15,9 @@ void CodegenVisitor::visitProgramNode(const Program *node) {
 void CodegenVisitor::visitFunctionNode(const FunctionNode *node) {
   onEnterBlock(node->getFunctionDeclaration()->getName());
   node->getFunctionDeclaration()->accept(this);
+  auto function = static_cast<llvm::Function *>(ret_);
   node->getBody()->accept(this);
+  llvm::verifyFunction(*function);
   onExitBlock();
 }
 
@@ -34,6 +37,7 @@ void CodegenVisitor::visitFunctionDeclarationNode(
   }
   auto entry = llvm::BasicBlock::Create(*context_, "entry", function);
   builder_->SetInsertPoint(entry);
+  ret_ = function;
 }
 
 void CodegenVisitor::visitBodyNode(const BodyNode *node) {

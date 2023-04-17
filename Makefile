@@ -32,6 +32,10 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(LLVM_CXXFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+compile: $(BUILD_DIR)/$(TARGET_EXEC)
+	$^ test/basic.k > basic.ll
+	cat basic.ll
+
 test: $(BUILD_DIR)/$(TEST_EXEC)
 	$^
 

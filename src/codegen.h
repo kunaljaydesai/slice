@@ -1,7 +1,15 @@
 #include "visitor.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Passes/OptimizationLevel.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar/InstSimplifyPass.h"
+#include "llvm/Transforms/Scalar/Reassociate.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include <fstream>
 #include <iostream>
 
@@ -49,8 +57,14 @@ private:
 class CodegenVisitor : public Visitor {
 public:
   CodegenVisitor() {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
+
     context_ = std::make_unique<llvm::LLVMContext>();
     module_ = std::make_unique<llvm::Module>("slice", *context_);
+
+    // module_->setDataLayout()
     builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
     root_symbol_table_ = std::make_shared<SymbolTable>();
     current_symbol_table_ = root_symbol_table_;
@@ -67,6 +81,25 @@ public:
   visitFunctionDeclarationNode(const FunctionDeclarationNode *node) override;
   void visitFunctionNode(const FunctionNode *node) override;
   void visitProgramNode(const Program *node) override;
+
+  void optimize() {
+    llvm::LoopAnalysisManager lam;
+    llvm::FunctionAnalysisManager fam;
+    llvm::CGSCCAnalysisManager cgam;
+    llvm::ModuleAnalysisManager mam;
+    llvm::PassBuilder passbuilder;
+
+    passbuilder.registerModuleAnalyses(mam);
+    passbuilder.registerCGSCCAnalyses(cgam);
+    passbuilder.registerFunctionAnalyses(fam);
+    passbuilder.registerLoopAnalyses(lam);
+    passbuilder.crossRegisterProxies(lam, fam, cgam, mam);
+
+    llvm::ModulePassManager mpm =
+        passbuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+
+    mpm.run(*module_, mam);
+  }
 
   void dump() { module_->print(llvm::outs(), nullptr); }
 
