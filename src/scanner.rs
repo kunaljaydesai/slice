@@ -43,7 +43,7 @@ pub enum TokenType {
 }
 
 pub struct Token {
-    token_type: TokenType,
+    pub token_type: TokenType,
     identifier: String, // filled in for type `tok_identifier`
     number: f64,        // filled in for type `tok_number`
 }
