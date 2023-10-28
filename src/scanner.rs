@@ -73,7 +73,7 @@ impl fmt::Display for Token {
             TokenType::TokGte => "greater_than_equal",
             TokenType::TokLbrak => "left_bracket",
             TokenType::TokRbrak => "right_bracket",
-            TokenType::TokRpar => "left_parenthesis",
+            TokenType::TokLpar => "left_parenthesis",
             TokenType::TokRpar => "right_parenthesis",
             TokenType::TokIf => "if",
             _ => "unknown",
@@ -112,6 +112,10 @@ impl Scanner {
         while !self.is_at_end() && (self.is_space() || self.is_new_line()) {
             self.idx += 1
         }
+    }
+
+    pub fn get_tokens(self) -> Vec<Token> {
+        return self.tokens;
     }
 
     fn get_token(&mut self) -> Option<Token> {

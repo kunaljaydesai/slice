@@ -1,5 +1,7 @@
+mod parser;
 mod scanner;
 
+use parser::Parser;
 use scanner::Scanner;
 use std::env;
 use std::fs;
@@ -16,4 +18,6 @@ fn main() {
     let source = fs::read_to_string(file_path).expect("error trying to read source file");
     let mut scanner = Scanner::new(source);
     scanner.scan_tokens();
+
+    let parser = Parser::new(scanner.get_tokens());
 }
