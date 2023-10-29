@@ -90,7 +90,7 @@ impl ASTVisitor for PrintAST {
             "",
             "Name",
             identifier.name,
-            width = self.get_padding()
+            width = self.get_padding() + 4
         );
     }
 
