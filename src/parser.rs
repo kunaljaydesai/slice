@@ -134,10 +134,19 @@ impl Visitable for BinaryExpression {
     }
 }
 
-pub struct NumberLiteralExpression {}
+pub struct NumberLiteralExpression {
+    value: f64,
+}
 impl Visitable for NumberLiteralExpression {
     fn visit(tokens: &mut TokenStream) -> Self {
-        todo!("Implement number literal expression");
+        tokens.expected_current_token(TokenType::TokNumber);
+        if let Some(token) = tokens.consume() {
+            NumberLiteralExpression {
+                value: token.number,
+            }
+        } else {
+            panic!("Found invalid token type for number literal");
+        }
     }
 }
 
@@ -188,6 +197,9 @@ impl Expression {
                     } else {
                         panic!("Expected identifier token but didn't find one");
                     }
+                }
+                TokenType::TokNumber => {
+                    return Expression::NumberLiteral(NumberLiteralExpression::visit(tokens))
                 }
                 _ => panic!("Received unexpected token type in expression"),
             }
