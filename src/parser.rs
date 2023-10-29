@@ -122,7 +122,12 @@ pub enum Expression {
     FunctionCall(FunctionCallExpression),
 }
 
-pub struct BinaryExpression {}
+pub struct BinaryExpression {
+    bin_op: TokenType,
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
+}
+
 impl Visitable for BinaryExpression {
     fn visit(tokens: &mut TokenStream) -> Self {
         todo!("Implement binary expression");
@@ -160,7 +165,7 @@ impl Visitable for FunctionCallExpression {
 }
 
 impl Expression {
-    fn handleLHS(tokens: &mut TokenStream) -> Expression {
+    fn handle_lhs(tokens: &mut TokenStream) -> Expression {
         if let Some(token) = tokens.get_current_token() {
             match token.token_type {
                 TokenType::TokIdentifier => {
@@ -191,15 +196,66 @@ impl Expression {
         }
     }
 
-    fn handleBinOpRHS(tokens: &mut TokenStream, lhs: Expression) -> Expression {
+    fn get_bin_op_precedence(token: &Token) -> u32 {
+        match token.token_type {
+            TokenType::TokAdd => 1000,
+            TokenType::TokSub => 2000,
+            TokenType::TokMul => 3000,
+            TokenType::TokDiv => 4000,
+            TokenType::TokMod => 5000,
+            TokenType::TokGt => 6000,
+            TokenType::TokGte => 7000,
+            TokenType::TokLt => 8000,
+            TokenType::TokLte => 9000,
+            _ => 0,
+        }
+    }
+
+    fn handle_bin_op_rhs(
+        precedence: u32,
+        tokens: &mut TokenStream,
+        mut lhs: Expression,
+    ) -> Expression {
+        loop {
+            if let Some(bin_op) = tokens.consume() {
+                let bin_op_precedence = Expression::get_bin_op_precedence(&bin_op);
+                if bin_op_precedence < precedence {
+                    return lhs;
+                }
+
+                let mut rhs = Expression::handle_lhs(tokens);
+                if let Some(next_bin_op) = tokens.consume() {
+                    let next_bin_op_precedence = Expression::get_bin_op_precedence(&next_bin_op);
+                    // 1 + 2 * 3 LHS = 1+2, RHS = 3
+                    // 1 * 2 + 3 LHS = 1, RHS = 2 + 3
+                    if bin_op_precedence < next_bin_op_precedence {
+                        rhs =
+                            Expression::handle_bin_op_rhs(next_bin_op_precedence + 1, tokens, rhs);
+                    }
+                    lhs = Expression::Binary(BinaryExpression {
+                        bin_op: bin_op.token_type,
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                    });
+                } else {
+                    return Expression::Binary(BinaryExpression {
+                        bin_op: bin_op.token_type,
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                    });
+                }
+            } else {
+                return lhs;
+            }
+        }
         todo!("handleBinOpRHS");
     }
 }
 
 impl Visitable for Expression {
     fn visit(tokens: &mut TokenStream) -> Expression {
-        let lhs = Expression::handleLHS(tokens);
-        Expression::handleBinOpRHS(tokens, lhs)
+        let lhs = Expression::handle_lhs(tokens);
+        Expression::handle_bin_op_rhs(0, tokens, lhs)
     }
 }
 
