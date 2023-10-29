@@ -1,10 +1,14 @@
 mod parser;
+mod print_ast;
 mod scanner;
+mod visitor;
 
-use parser::{Parser, Printable, Program};
+use parser::{Parser, Program};
+use print_ast::PrintAST;
 use scanner::Scanner;
 use std::env;
 use std::fs;
+use visitor::ASTVisitor;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -21,5 +25,5 @@ fn main() {
 
     let mut parser = Parser::new(scanner.get_tokens());
     let program: Program = parser.parse();
-    program.debug(0);
+    PrintAST { call_depth: 0 }.visit_program(&program);
 }

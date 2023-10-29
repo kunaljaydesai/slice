@@ -5,10 +5,6 @@ trait Visitable {
     fn visit(tokens: &mut TokenStream) -> Self;
 }
 
-pub trait Printable {
-    fn debug(&self, padding: usize) -> ();
-}
-
 pub struct TokenStream {
     tokens: Vec<Token>,
 }
@@ -80,33 +76,8 @@ impl TokenStream {
 }
 
 pub struct FunctionDeclaration {
-    name: String,
-    args: Vec<String>,
-}
-
-impl Printable for FunctionDeclaration {
-    fn debug(&self, padding: usize) -> () {
-        println!(
-            "{: >width$} {}",
-            "",
-            "Function Declaration",
-            width = padding
-        );
-        println!(
-            "{: >width$} {}: {}",
-            "",
-            "Name",
-            self.name,
-            width = padding + 4
-        );
-        println!(
-            "{: >width$} {}: {:?}",
-            "",
-            "Args",
-            self.args,
-            width = padding + 4
-        );
-    }
+    pub name: String,
+    pub args: Vec<String>,
 }
 
 impl Visitable for FunctionDeclaration {
@@ -162,28 +133,9 @@ pub enum Expression {
 }
 
 pub struct BinaryExpression {
-    bin_op: TokenType,
-    lhs: Box<Expression>,
-    rhs: Box<Expression>,
-}
-
-impl Printable for BinaryExpression {
-    fn debug(&self, padding: usize) -> () {
-        println!("{: >width$} {}", "", "BinaryExpression", width = padding);
-        match &*self.lhs {
-            Expression::Binary(binary) => binary.debug(padding + 4),
-            Expression::NumberLiteral(number_literal) => number_literal.debug(padding + 4),
-            Expression::Identifier(identifier) => identifier.debug(padding + 4),
-            Expression::FunctionCall(function_call) => function_call.debug(padding + 4),
-        }
-
-        match &*self.rhs {
-            Expression::Binary(binary) => binary.debug(padding + 4),
-            Expression::NumberLiteral(number_literal) => number_literal.debug(padding + 4),
-            Expression::Identifier(identifier) => identifier.debug(padding + 4),
-            Expression::FunctionCall(function_call) => function_call.debug(padding + 4),
-        }
-    }
+    pub bin_op: TokenType,
+    pub lhs: Box<Expression>,
+    pub rhs: Box<Expression>,
 }
 
 impl Visitable for BinaryExpression {
@@ -193,19 +145,7 @@ impl Visitable for BinaryExpression {
 }
 
 pub struct NumberLiteralExpression {
-    value: f64,
-}
-impl Printable for NumberLiteralExpression {
-    fn debug(&self, padding: usize) -> () {
-        println!("{: >width$} {}", "", "NumberLiteralExpr", width = padding);
-        println!(
-            "{: >width$} {}: {}",
-            "",
-            "Value",
-            self.value,
-            width = padding + 4
-        );
-    }
+    pub value: f64,
 }
 
 impl Visitable for NumberLiteralExpression {
@@ -222,19 +162,7 @@ impl Visitable for NumberLiteralExpression {
 }
 
 pub struct IdentifierExpression {
-    name: String,
-}
-
-impl Printable for IdentifierExpression {
-    fn debug(&self, padding: usize) -> () {
-        println!(
-            "{: >width$} {}",
-            "",
-            "IdentifierExpression",
-            width = padding
-        );
-        println!("{: >width$} {}: {}", "", "Name", self.name, width = padding);
-    }
+    pub name: String,
 }
 
 impl Visitable for IdentifierExpression {
@@ -251,12 +179,6 @@ impl Visitable for IdentifierExpression {
 }
 
 pub struct FunctionCallExpression {}
-
-impl Printable for FunctionCallExpression {
-    fn debug(&self, padding: usize) -> () {
-        todo!("implement printable for function call expr");
-    }
-}
 
 impl Visitable for FunctionCallExpression {
     fn visit(tokens: &mut TokenStream) -> Self {
@@ -369,43 +291,19 @@ impl Visitable for Expression {
     }
 }
 
-enum ScopeStatement {
+pub enum ScopeStatement {
     Definition(DefinitionScopeStatement),
     Conditional(ConditionalScopeStatement),
     Return(ReturnScopeStatement),
 }
 pub struct DefinitionScopeStatement {
-    lvalue_identifier: String,
-    rvalue_expression: Expression,
+    pub lvalue_identifier: String,
+    pub rvalue_expression: Expression,
 }
 pub struct ReturnScopeStatement {
-    return_expr: Expression,
+    pub return_expr: Expression,
 }
 pub struct ConditionalScopeStatement {}
-
-impl Printable for DefinitionScopeStatement {
-    fn debug(&self, padding: usize) -> () {
-        println!(
-            "{: >width$} {}",
-            "",
-            "DefinitionScopeStatement",
-            width = padding
-        );
-        println!(
-            "{: >width$} {}: {}",
-            "",
-            "Lvalue Identifier",
-            self.lvalue_identifier,
-            width = padding + 4
-        );
-        match &self.rvalue_expression {
-            Expression::Binary(binary) => binary.debug(padding + 4),
-            Expression::NumberLiteral(number_literal) => number_literal.debug(padding + 4),
-            Expression::Identifier(identifier) => identifier.debug(padding + 4),
-            Expression::FunctionCall(function_call) => function_call.debug(padding + 4),
-        }
-    }
-}
 
 impl Visitable for DefinitionScopeStatement {
     fn visit(tokens: &mut TokenStream) -> DefinitionScopeStatement {
@@ -422,40 +320,12 @@ impl Visitable for DefinitionScopeStatement {
     }
 }
 
-impl Printable for ReturnScopeStatement {
-    fn debug(&self, padding: usize) -> () {
-        println!(
-            "{: >width$} {}",
-            "",
-            "ReturnScopeStatement",
-            width = padding
-        );
-        match &self.return_expr {
-            Expression::Binary(binary) => binary.debug(padding + 4),
-            Expression::NumberLiteral(number_literal) => number_literal.debug(padding + 4),
-            Expression::Identifier(identifier) => identifier.debug(padding + 4),
-            Expression::FunctionCall(function_call) => function_call.debug(padding + 4),
-        }
-    }
-}
-
 impl Visitable for ReturnScopeStatement {
     fn visit(tokens: &mut TokenStream) -> ReturnScopeStatement {
         tokens.expected_current_token(TokenType::TokReturn);
         tokens.consume();
         let return_expr = Expression::visit(tokens);
         ReturnScopeStatement { return_expr }
-    }
-}
-
-impl Printable for ConditionalScopeStatement {
-    fn debug(&self, padding: usize) -> () {
-        println!(
-            "{: >width$} {}",
-            "",
-            "ConditionalScopeStatement",
-            width = padding
-        );
     }
 }
 
@@ -468,20 +338,7 @@ impl Visitable for ConditionalScopeStatement {
 }
 
 pub struct Scope {
-    blocks: Vec<ScopeStatement>,
-}
-
-impl Printable for Scope {
-    fn debug(&self, padding: usize) -> () {
-        println!("{: >width$} {}", "", "Scope", width = padding);
-        for block in self.blocks.iter() {
-            match block {
-                ScopeStatement::Definition(definition) => definition.debug(padding + 4),
-                ScopeStatement::Return(ret) => ret.debug(padding + 4),
-                ScopeStatement::Conditional(conditional) => conditional.debug(padding + 4),
-            }
-        }
-    }
+    pub blocks: Vec<ScopeStatement>,
 }
 
 impl Visitable for Scope {
@@ -512,8 +369,8 @@ impl Visitable for Scope {
 }
 
 pub struct Function {
-    declaration: FunctionDeclaration,
-    body: Scope,
+    pub declaration: FunctionDeclaration,
+    pub body: Scope,
 }
 
 impl Visitable for Function {
@@ -524,25 +381,8 @@ impl Visitable for Function {
     }
 }
 
-impl Printable for Function {
-    fn debug(&self, padding: usize) {
-        println!("{: >width$} {}", "", "Function", width = padding);
-        self.declaration.debug(padding + 4);
-        self.body.debug(padding + 4);
-    }
-}
-
 pub struct Program {
-    functions: Vec<Function>,
-}
-
-impl Printable for Program {
-    fn debug(&self, padding: usize) {
-        println!("{: >width$} {}", "", "Program", width = padding);
-        for function in self.functions.iter() {
-            function.debug(padding + 4);
-        }
-    }
+    pub functions: Vec<Function>,
 }
 
 pub struct Parser {
