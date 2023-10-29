@@ -14,6 +14,25 @@ impl TokenStream {
         TokenStream { tokens }
     }
 
+    fn is_current_token_binary_operator(&self) -> bool {
+        if let Some(current_token) = self.get_current_token() {
+            return match current_token.token_type {
+                TokenType::TokAdd => true,
+                TokenType::TokSub => true,
+                TokenType::TokMul => true,
+                TokenType::TokDiv => true,
+                TokenType::TokMod => true,
+                TokenType::TokGt => true,
+                TokenType::TokGte => true,
+                TokenType::TokLt => true,
+                TokenType::TokLte => true,
+                _ => false,
+            };
+        } else {
+            false
+        }
+    }
+
     fn peek_next_token(&self) -> Option<&Token> {
         if self.tokens.len() > 1 {
             return Some(&self.tokens[1]);
@@ -39,7 +58,6 @@ impl TokenStream {
     }
 
     fn consume(&mut self) -> Option<Token> {
-        println!("Parsed token {}", self.tokens[0]);
         // TODO: this is inefficient, swap it out with vecdeq
         if self.tokens.len() > 0 {
             Some(self.tokens.remove(0))
@@ -208,7 +226,7 @@ impl Expression {
         }
     }
 
-    fn get_bin_op_precedence(token: &Token) -> u32 {
+    fn get_bin_op_precedence(token: &Token) -> i32 {
         match token.token_type {
             TokenType::TokAdd => 1000,
             TokenType::TokSub => 2000,
@@ -219,27 +237,35 @@ impl Expression {
             TokenType::TokGte => 7000,
             TokenType::TokLt => 8000,
             TokenType::TokLte => 9000,
-            _ => 0,
+            _ => -1,
         }
     }
 
     fn handle_bin_op_rhs(
-        precedence: u32,
+        precedence: i32,
         tokens: &mut TokenStream,
         mut lhs: Expression,
     ) -> Expression {
         loop {
+            if !tokens.is_current_token_binary_operator() {
+                return lhs;
+            }
+
+            // dont consume unless we're sure this is a binary operator
             if let Some(bin_op) = tokens.consume() {
                 let bin_op_precedence = Expression::get_bin_op_precedence(&bin_op);
-                if bin_op_precedence < precedence {
-                    return lhs;
-                }
-
                 let mut rhs = Expression::handle_lhs(tokens);
-                if let Some(next_bin_op) = tokens.consume() {
+
+                if let Some(next_bin_op) = tokens.get_current_token() {
+                    if !tokens.is_current_token_binary_operator() {
+                        return Expression::Binary(BinaryExpression {
+                            bin_op: bin_op.token_type,
+                            rhs: Box::new(rhs),
+                            lhs: Box::new(lhs),
+                        });
+                    }
+
                     let next_bin_op_precedence = Expression::get_bin_op_precedence(&next_bin_op);
-                    // 1 + 2 * 3 LHS = 1+2, RHS = 3
-                    // 1 * 2 + 3 LHS = 1, RHS = 2 + 3
                     if bin_op_precedence < next_bin_op_precedence {
                         rhs =
                             Expression::handle_bin_op_rhs(next_bin_op_precedence + 1, tokens, rhs);
@@ -260,7 +286,6 @@ impl Expression {
                 return lhs;
             }
         }
-        todo!("handleBinOpRHS");
     }
 }
 
@@ -280,7 +305,9 @@ pub struct DefinitionScopeStatement {
     lvalue_identifier: String,
     rvalue_expression: Expression,
 }
-pub struct ReturnScopeStatement {}
+pub struct ReturnScopeStatement {
+    return_expr: Expression,
+}
 pub struct ConditionalScopeStatement {}
 
 impl Visitable for DefinitionScopeStatement {
@@ -300,8 +327,10 @@ impl Visitable for DefinitionScopeStatement {
 
 impl Visitable for ReturnScopeStatement {
     fn visit(tokens: &mut TokenStream) -> ReturnScopeStatement {
-        todo!("Need to implement return statement");
-        ReturnScopeStatement {}
+        tokens.expected_current_token(TokenType::TokReturn);
+        tokens.consume();
+        let return_expr = Expression::visit(tokens);
+        ReturnScopeStatement { return_expr }
     }
 }
 
