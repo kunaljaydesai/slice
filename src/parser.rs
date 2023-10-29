@@ -66,14 +66,6 @@ impl TokenStream {
         }
     }
 
-    fn remove_current_token(&mut self) -> Option<Token> {
-        if self.tokens.len() > 0 {
-            Some(self.tokens.remove(0))
-        } else {
-            None
-        }
-    }
-
     fn get_current_token(&self) -> Option<&Token> {
         if self.tokens.len() == 0 {
             None
