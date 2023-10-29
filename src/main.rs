@@ -19,5 +19,6 @@ fn main() {
     let mut scanner = Scanner::new(source);
     scanner.scan_tokens();
 
-    let parser = Parser::new(scanner.get_tokens());
+    let mut parser = Parser::new(scanner.get_tokens());
+    let program = parser.parse();
 }

@@ -7,7 +7,6 @@ pub enum TokenType {
     TokEof,
     // keywords
     TokDef,
-    TokExtern,
     TokIf,
     TokElse,
     TokReturn,
@@ -44,8 +43,8 @@ pub enum TokenType {
 
 pub struct Token {
     pub token_type: TokenType,
-    identifier: String, // filled in for type `tok_identifier`
-    number: f64,        // filled in for type `tok_number`
+    pub identifier: String, // filled in for type `tok_identifier`
+    pub number: f64,        // filled in for type `tok_number`
 }
 
 impl Token {
@@ -60,12 +59,7 @@ impl Token {
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.token_type == TokenType::TokIdentifier {
-            return write!(f, "{}", self.identifier);
-        } else if self.token_type == TokenType::TokNumber {
-            return write!(f, "{}", self.number.to_string());
-        }
-
+        let mut number_str = String::new();
         let token_type_str = match self.token_type {
             TokenType::TokLt => "less_than",
             TokenType::TokGt => "greater_than",
@@ -76,7 +70,23 @@ impl fmt::Display for Token {
             TokenType::TokLpar => "left_parenthesis",
             TokenType::TokRpar => "right_parenthesis",
             TokenType::TokIf => "if",
-            _ => "unknown",
+            TokenType::TokElse => "else",
+            TokenType::TokReturn => "return",
+            TokenType::TokDef => "def",
+            TokenType::TokEof => "eof",
+            TokenType::TokIdentifier => self.identifier.as_ref(),
+            TokenType::TokNumber => {
+                // seems hacky.. how do you get around this?
+                number_str = self.number.to_string();
+                &number_str
+            }
+            TokenType::TokAdd => "+",
+            TokenType::TokMul => "*",
+            TokenType::TokDiv => "/",
+            TokenType::TokSub => "-",
+            TokenType::TokMod => "%",
+            TokenType::TokComma => "comma",
+            TokenType::TokEquals => "=",
         };
         write!(f, "{}", token_type_str)
     }
@@ -134,7 +144,6 @@ impl Scanner {
 
             return match identifier_str.as_str() {
                 "def" => Some(Token::new(TokenType::TokDef, String::from(""), 0.0)),
-                "extern" => Some(Token::new(TokenType::TokExtern, String::from(""), 0.0)),
                 "if" => Some(Token::new(TokenType::TokIf, String::from(""), 0.0)),
                 "else" => Some(Token::new(TokenType::TokElse, String::from(""), 0.0)),
                 "return" => Some(Token::new(TokenType::TokReturn, String::from(""), 0.0)),
