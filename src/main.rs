@@ -1,7 +1,7 @@
 mod parser;
 mod scanner;
 
-use parser::Parser;
+use parser::{Parser, Printable, Program};
 use scanner::Scanner;
 use std::env;
 use std::fs;
@@ -20,5 +20,6 @@ fn main() {
     scanner.scan_tokens();
 
     let mut parser = Parser::new(scanner.get_tokens());
-    let program = parser.parse();
+    let program: Program = parser.parse();
+    program.debug(0);
 }

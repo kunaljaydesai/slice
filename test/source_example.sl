@@ -5,5 +5,7 @@ def fib(x) {
         c = 2
         d = a + b + c
         e = a * b + c / d + 2
+        f = 2 * 2 / 4
+        g = 2 / 2 * 4
         return b
 }
